@@ -1,0 +1,138 @@
+let gotas = [];
+let solo;
+let tipoSolo = "vegetacao"; // valor inicial
+let arvores = [];
+let lagoa;
+let predios = []; // Array para armazenar os prédios
+let carros = [];  // Array para armazenar os carros
+
+function setup() {
+  let canvas = createCanvas(600, 400);
+  canvas.parent("canvas-holder");
+  solo = new Solo(tipoSolo);
+  // Adiciona uma floresta densa e a lagoa inicialmente se o solo for de vegetação
+  if (tipoSolo === "vegetacao") {
+    criarFloresta();
+    lagoa = new Lagoa(width * 0.7, solo.altura - 15, 80, 30); // Posição e dimensões da lagoa
+  }
+}
+
+function draw() {
+  background(200, 220, 255); // céu
+
+  // Desenha o sol no canto superior direito
+  fill(255, 200, 0); // Amarelo alaranjado
+  noStroke();
+  ellipse(width - 50, 50, 80, 80); // Posição e tamanho do sol
+
+  for (let i = gotas.length - 1; i >= 0; i--) {
+    gotas[i].cair();
+    gotas[i].mostrar();
+
+    if (gotas[i].atingeSolo(solo.altura)) {
+      solo.aumentarErosao();
+      gotas.splice(i, 1);
+    }
+  }
+
+  solo.mostrar();
+
+  // Mostra a lagoa apenas se o solo for de vegetação
+  if (tipoSolo === "vegetacao" && lagoa) {
+    lagoa.mostrar();
+  }
+
+  // Mostra as árvores
+  for (let arvore of arvores) {
+    arvore.mostrar();
+  }
+
+  // Mostra as plantas no solo exposto
+  if (tipoSolo === "exposto") {
+    for (let planta of solo.plantas) {
+      planta.mostrar();
+    }
+  }
+
+  // Mostra prédios e carros se o solo for urbanizado
+  if (tipoSolo === "urbanizado") {
+    for (let predio of predios) {
+      predio.mostrar();
+    }
+    for (let carro of carros) {
+      carro.mover();
+      carro.mostrar();
+    }
+    // Adiciona novos carros periodicamente
+    if (frameCount % 120 === 0) { // A cada 2 segundos (60 frames/seg)
+      carros.push(new Carro(solo.altura + 10, random([-2, 2]))); // Carros na rua
+    }
+  }
+
+
+  if (frameCount % 5 === 0) {
+    gotas.push(new Gota());
+  }
+}
+
+function setSoilType(tipo) {
+  tipoSolo = tipo;
+  solo = new Solo(tipoSolo);
+  arvores = []; // Limpa as árvores ao mudar o tipo de solo
+  lagoa = null; // Remove a lagoa ao mudar o tipo de solo
+  predios = []; // Limpa os prédios
+  carros = [];  // Limpa os carros
+
+  // Adiciona elementos com base no novo tipo de solo
+  if (tipoSolo === "vegetacao") {
+    criarFloresta();
+    lagoa = new Lagoa(width * 0.7, solo.altura - 15, 80, 30); // Recria a lagoa
+  } else if (tipoSolo === "exposto") {
+    criarPlantasExpostas(); // Adiciona plantas ao solo exposto
+  } else if (tipoSolo === "urbanizado") {
+    criarUrbanizacao(); // Adiciona prédios e carros
+  }
+}
+
+function criarFloresta() {
+  for (let i = 0; i < 50; i++) { // Aumentei ainda mais o número de árvores
+    let x = random(width * 0.05, width * 0.95); // Espalha as árvores um pouco mais
+    // Passa a altura do solo para a árvore para que ela se posicione corretamente
+    arvores.push(new Arvore(x, solo.altura));
+  }
+}
+
+function criarPlantasExpostas() {
+  // Adiciona algumas plantas menores ao solo exposto
+  for (let i = 0; i < 30; i++) { // Número de plantas
+    let x = random(width * 0.05, width * 0.95);
+    // Passa a altura do solo para a planta para que ela se posicione corretamente
+    solo.plantas.push(new Planta(x, solo.altura));
+  }
+}
+
+function criarUrbanizacao() {
+  // Cria alguns prédios
+  let currentX = 50;
+  while (currentX < width - 50) {
+    let larguraPredio = random(40, 80);
+    let alturaPredio = random(80, 180);
+    predios.push(new Predio(currentX, solo.altura - alturaPredio, larguraPredio, alturaPredio));
+    currentX += larguraPredio + random(20, 50); // Espaçamento entre prédios
+  }
+
+  // Adiciona alguns carros iniciais
+  for (let i = 0; i < 3; i++) {
+    carros.push(new Carro(solo.altura + 10, random([-2, 2]))); // Carros na rua
+  }
+}
+
+class Gota {
+  constructor() {
+    this.x = random(width);
+    this.y = 0;
+    this.vel = random(4, 6);
+  }
+
+  cair() {
+    this.y …
